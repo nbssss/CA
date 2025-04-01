@@ -13,20 +13,22 @@ class GUI(QMainWindow):
         super().__init__(parent)
         self.setWindowTitle("Fire Simulation")
         self.setGeometry(100,100,600,600)
+        self.file_path = None
         self.initGUI()
 
     def load_image(self):
-        #options = QFileDialog.options()
         # otwiera się okno do wyboru przez użytkownika pliku z komputera
         # _ oznacz że druga zwracana wartość nie jest potrzbna - ignorujemy ją
         file_path, _ = QFileDialog.getOpenFileName(self, "Choose an image", "", "Obrazy (*.png *.jpg *.jpeg);;All files (*)")         # ustalam, że do wyboru sa tylko pliki graficzne
-        self.selected_file = file_path
         if file_path:
+            self.file_path = file_path
             self.grid = load_image_as_grid(file_path, GRID_SIZE)
+            self._refresh_display()
 
+    def _refresh_display(self):
         cmap = ListedColormap(["saddlebrown", "green", "red", "blue"])
+        display_grid = np.where(np.isnan(self.grid), -1, self.grid)
         self.img = self.ax.imshow(self.grid, cmap=cmap, vmin=0, vmax=3)
-        self.ani = animation.FuncAnimation(self.fig, evolution, fargs=(self.img, self.grid), frames=10, interval=150)
         self.canvas.draw()
 
     def initGUI(self):
@@ -56,7 +58,8 @@ class GUI(QMainWindow):
         container.setLayout(layout)
         self.setCentralWidget(container)
 
-        self.grid = np.zeros((GRID_SIZE,GRID_SIZE))
+        self.grid = np.full((GRID_SIZE,GRID_SIZE), np.nan)
+        self._refresh_display()
 
     def start_simulation(self):
         tree_positions = np.argwhere(self.grid == TREE)     # znajduje wszystkie pozycje drzew
@@ -66,7 +69,9 @@ class GUI(QMainWindow):
             y, x = tree_positions[random_index]
             self.grid[y,x] = FIRE
 
-    def reset_grid(self):
-        self.grid = load_image_as_grid(self.selected_file,GRID_SIZE)
-        self.img.set_data(self.grid)
+        self.ani = animation.FuncAnimation(self.fig, evolution, fargs=(self.img, self.grid), frames=10, interval=150)
         self.canvas.draw()
+
+    def reset_grid(self):
+        self.grid = load_image_as_grid(self.file_path,GRID_SIZE)
+        self._refresh_display()

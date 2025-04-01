@@ -1,5 +1,4 @@
 import numpy as np
-import random
 
 GRID_SIZE = 100
 
@@ -8,32 +7,6 @@ TREE = 1    # healthy tree - could be fired
 FIRE = 2    # tree in fire
 ASH = 0     # burned tree
 WATER = 3
-
-'''
-def create_grid():
-    grid = np.zeros((GRID_SIZE, GRID_SIZE))
-
-    for i in range(GRID_SIZE):
-        for j in range(GRID_SIZE):
-            temp = random.random()
-
-            if temp < 0.5:
-                grid[i, j] = TREE
-            elif temp < 0.6:
-                grid[i,j] = WATER
-            else:
-                grid[i, j] = ASH
-
-    while True:
-        y, x = np.random.randint(0, GRID_SIZE, size=2)
-
-        if grid[y,x] == TREE:
-            grid[y,x] = FIRE
-            break
-
-    return grid
-'''
-
 
 # [y,x] - grid position
 def count_neighbours_on_fire(y, x, grid):
@@ -49,7 +22,6 @@ def count_neighbours_on_fire(y, x, grid):
         how_many -= 1
 
     return how_many
-
 
 def evolution(frameNum, img, grid):
     how_many_neighbours = np.zeros((GRID_SIZE, GRID_SIZE))
