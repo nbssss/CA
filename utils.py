@@ -1,8 +1,7 @@
 import os
-
 import numpy as np
 from PIL import Image
-from simulation import TREE, WATER, ASH, FIRE
+from const import TREE, WATER, ASH, FIRE
 
 def load_image_as_grid(image_path, grid_size):
     img = Image.open(image_path).convert("RGB")     # upewniam się, że obraz jest w formacie RGB
