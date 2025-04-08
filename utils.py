@@ -25,5 +25,3 @@ def load_image_as_grid(image_path, grid_size):
 
     return grid
 
-def clear_window():
-    os.system('cls' if os.name == 'nt' else 'clear')

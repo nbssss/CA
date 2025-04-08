@@ -1,0 +1,1 @@
+![Demo Symulacji](/demo.gif)

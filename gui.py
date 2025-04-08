@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QFileDialog, QVBoxLayout, QPushButton, QWidget, QMai
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from simulation import Simulation
 
-from const import GRID_SIZE
+from const import GRID_SIZE, TREE, FIRE_START
 
 class GUI(QMainWindow):
     def __init__(self, parent=None):
@@ -15,6 +15,7 @@ class GUI(QMainWindow):
         self.setWindowTitle("Fire Simulation")
         self.setGeometry(100,100,600,600)
         self.file_path = None
+        self.fire_positions = []
         self.initGUI()
 
     def initGUI(self):
@@ -32,12 +33,25 @@ class GUI(QMainWindow):
         self.loadBtn = QPushButton("Load an image")
         self.loadBtn.clicked.connect(self.load_image)
 
+    def on_click(self, event):
+        if event.xdata is not None and event.ydata is not None:     # sprawdzenie czy kliknięcie było w siatce
+        # event.xdata/event.ydata to współrzędne miejsca, w ktr kliknęłam - w jednostkach wykresu, NIE PIKSELI!
+            x = int(event.xdata)
+            y = int(event.ydata)    # zapisanie współrzędnych miejsca kliknięcia
+            if self.simulation.grid[y, x] == TREE:   # możliwe kliknięcie tylko drzewa
+                self.fire_positions.append((y, x))
+                print(f"Pożar dodany w: ({x}, {y})")
+                self.simulation.grid[y, x] = FIRE_START
+                self._refresh_display()
+
     def _setup_canvas(self):
         self.fig, self.ax = plt.subplots()
         plt.xticks([])
         plt.yticks([])
         self.canvas = FigureCanvas(self.fig)
         self.grid = np.full((GRID_SIZE, GRID_SIZE), np.nan)
+        self.canvas.mpl_connect("button_press_event", self.on_click)    # słuchacz zdarzeń
+
 
     def _setup_layout(self):
         layout = QVBoxLayout()
@@ -55,20 +69,27 @@ class GUI(QMainWindow):
     def load_image(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Choose an image", "", "Obrazy (*.png *.jpg *.jpeg);;All files (*)")         # ustalam, że do wyboru sa tylko pliki graficzne
         if file_path:
+            self.file_path = file_path
             self.simulation.load_grid_from_image(file_path)
             self._refresh_display()
 
     def _refresh_display(self):
-        cmap = ListedColormap(["saddlebrown", "green", "red", "blue"])
+        cmap = ListedColormap(["saddlebrown", "green", "red", "blue", "yellow"])
         display_grid = np.where(np.isnan(self.simulation.grid), -1, self.simulation.grid)
-        self.img = self.ax.imshow(display_grid, cmap=cmap, vmin=0, vmax=3)
+        self.img = self.ax.imshow(display_grid, cmap=cmap, vmin=0, vmax=4)
         self.canvas.draw()
 
     def start_simulation(self):
-        self.simulation.start_fire()
+        self.simulation.start_fire(self.fire_positions)
         self.ani = animation.FuncAnimation(self.fig, self.simulation.evolve, fargs=(self.img, ), frames=10, interval=150)
         self.canvas.draw()
 
     def reset_simulation(self):
-        self.simulation.reset()
+        if hasattr(self, 'ani'):
+            self.ani.event_source.stop()  # stop animacji
+        if self.file_path:
+            self.simulation.load_grid_from_image(self.file_path)
+        else:
+            self.simulation.reset()
+        self.fire_positions = []
         self._refresh_display()

@@ -1,6 +1,6 @@
 import numpy as np
 from utils import load_image_as_grid
-from const import GRID_SIZE, TREE, FIRE, ASH, WATER
+from const import GRID_SIZE, TREE, FIRE, ASH, FIRE_START
 
 class Simulation:
     def __init__(self):
@@ -9,16 +9,16 @@ class Simulation:
     def load_grid_from_image(self, image_path):
         self.grid = load_image_as_grid(image_path, GRID_SIZE)
 
-    def start_fire(self):
-        tree_positions = np.argwhere(self.grid == TREE)     # znajduje wszystkie pozycje drzew
-
-        if len(tree_positions) > 0:     # jeżeli w obrazie występuja drzewa
-            random_index = np.random.choice(len(tree_positions))
-            y, x = tree_positions[random_index]
-            self.grid[y,x] = FIRE
+    def start_fire(self, fire_positions):
+        for y, x in fire_positions:
+            if self.grid[y, x] == TREE:
+                self.grid[y, x] = FIRE
 
     def evolve(self, frameNum, img):
         how_many_neighbours = np.zeros((GRID_SIZE, GRID_SIZE))
+
+        mask = (self.grid == FIRE_START)    # tablica booleanów o tym samym kształcie co self.grid
+        self.grid[mask] = FIRE  # wybiera te komórki dla ktr wartoścć maski to True
 
         for i in range(GRID_SIZE):
             for j in range(GRID_SIZE):
